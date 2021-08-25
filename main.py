@@ -58,7 +58,9 @@ def main(args: argparse.Namespace = None):
     fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
     pathlib.Path(PHOTO_DIR).mkdir(exist_ok=True, parents=True)
-    pathlib.Path(PHOTO_DIR.replace("raw", "sent")).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(str(PHOTO_DIR).replace("raw", "sent")).mkdir(
+        parents=True, exist_ok=True
+    )
     timeout = 3000  # milliseconds
     logger.info("Waiting for event...")
     try:
