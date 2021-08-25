@@ -1,4 +1,5 @@
 import argparse
+import time
 import ftplib
 import fcntl
 import os
@@ -23,13 +24,6 @@ IP = "192.168.178.44"
 PORT = 26000
 
 
-def connect(ip: str, port: int) -> ftplib.FTP:
-    logger.info(f"IP: {ip}, Port: {port}")
-    ftp = ftplib.FTP()
-    ftp.connect(ip, port)
-    return ftp
-
-
 def send(picture: pathlib.Path, ftp: ftplib.FTP):
     logger.info("Sending picture to FTP...")
     send_picture(picture, ftp)
@@ -46,12 +40,46 @@ def move_picture(picture: pathlib.Path):
     picture.rename(sent)
 
 
-def main(args: argparse.Namespace = None):
-    logger.info("Connecting to camera...")
+def retry_loop(func):
+    def inner(*args):
+        timeout = time.time() + 60 * 2
+        while True:
+            try:
+                if time.time() > timeout:
+                    logger.warning("Retry exceeded")
+                    sys.exit(1)
+                result = func(*args)
+            except:
+                time.sleep(2)
+                continue
+            break
+        return result
+
+    return inner
+
+
+@retry_loop
+def connect_to_camera():
     camera = gp.Camera()
     camera.init()
+    logger.info("Successfully connected to camera")
+    return camera
+
+
+@retry_loop
+def connect(ip: str, port: int) -> ftplib.FTP:
+    ftp = ftplib.FTP()
+    ftp.connect(ip, port)
+    logger.info("Successfully connected to FTP")
+    return ftp
+
+
+def main(args: argparse.Namespace = None):
+    logger.info("Connecting to camera...")
+    camera = connect_to_camera()
 
     logger.info("Connecting to FTP...")
+    logger.info(f"IP: {args.ip or IP}, Port: {args.port or PORT}")
     ftp = connect(args.ip or IP, PORT)
 
     fl = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
@@ -63,22 +91,25 @@ def main(args: argparse.Namespace = None):
     )
     timeout = 3000  # milliseconds
     logger.info("Waiting for event...")
-    try:
-        while True:
+    while True:
+        try:
             event_type, event_data = camera.wait_for_event(timeout)
             if event_type == gp.GP_EVENT_FILE_ADDED:
                 cam_file = camera.file_get(
                     event_data.folder, event_data.name, gp.GP_FILE_TYPE_NORMAL
                 )
-                print(cam_file)
                 picture = pathlib.Path(PHOTO_DIR) / event_data.name
                 logger.info(f"Saving image to {picture}...")
-                # print("Image is being saved to {}".format(picture))
                 cam_file.save(str(picture))
                 send(picture, ftp)
-    except KeyboardInterrupt:
-        ftp.close()
-        camera.exit()
+        except KeyboardInterrupt:
+            ftp.close()
+            camera.exit()
+        except gp.GPhoto2Error:
+            logger.warning("Camera disconnected. Retrying...")
+            camera = connect_to_camera()
+            logger.info("Waiting for event...")
+            continue
     return 0
 
 
