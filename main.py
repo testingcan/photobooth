@@ -98,7 +98,7 @@ def read_ip(file: pathlib.Path = None):
     if not file:
         file = pathlib.Path.cwd() / "ip.json"
     with open(file, "r") as f:
-        ip = f.read()
+        ip = f.read().strip()
     return ip
 
 
