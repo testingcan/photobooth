@@ -111,8 +111,11 @@ def get_max_file(folder: pathlib.Path) -> str:
     afterwards to be named "capt0000.jpg" again. Moving it would cause the previous picture
     to be overwritten.
     """
-    max_file = max([int(file.stem[-4:]) for file in folder.rglob("*.jpg")])
-    max_file = str(max_file + 1).zfill(4)
+    try:
+        max_file = max([int(file.stem[-4:]) for file in folder.rglob("*.jpg")])
+        max_file = str(max_file + 1).zfill(4)
+    except ValueError:
+        max_file = "0000"
     file_name = f"capt{max_file}.jpg"
     return file_name
 
