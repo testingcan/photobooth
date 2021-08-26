@@ -53,9 +53,8 @@ def send_picture(picture: pathlib.Path, ftp: ftplib.FTP):
 
 def move_picture(picture: pathlib.Path):
     new_name = get_max_file(SENT_DIR)
-    print(picture.name, new_name)
     sent = SENT_DIR / new_name
-    shutil.move(picture, sent)
+    shutil.copy(picture, sent)
 
 
 def retry_loop(func):
