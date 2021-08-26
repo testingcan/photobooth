@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import time
 import ftplib
 import fcntl
@@ -8,9 +9,11 @@ import logging
 import sys
 
 import gphoto2 as gp
+from gphoto2 import file
 
 
 logger = logging.getLogger(__name__)
+
 logger.setLevel(logging.INFO)
 ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
@@ -19,6 +22,14 @@ formatter = logging.Formatter("%(levelname)s - %(message)s")
 ch.setFormatter(formatter)
 
 logger.addHandler(ch)
+
+LOG_DIR = pathlib.Path(__file__).parent / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+log = LOG_DIR / f"{datetime.datetime.now().strftime('%Y-%m-%d')}-photobooth.log"
+filehandler = logging.FileHandler(log)
+filehandler.setFormatter(formatter)
+logger.addHandler(filehandler)
+
 PHOTO_DIR = pathlib.Path(__file__).parent / "pictures/raw"
 PORT = 26000
 
@@ -41,13 +52,16 @@ def move_picture(picture: pathlib.Path):
 
 def retry_loop(func):
     def inner(*args):
-        timeout = time.time() + 60 * 2
+        timeout = time.time() + 60 * 15
         while True:
             try:
                 if time.time() > timeout:
                     logger.warning("Retry exceeded")
                     sys.exit(1)
                 result = func(*args)
+            except KeyboardInterrupt:
+                logger.info("Received keyboard interrupt. Shutting down...")
+                sys.exit(0)
             except:
                 time.sleep(2)
                 continue
