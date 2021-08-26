@@ -53,8 +53,8 @@ def send_picture(picture: pathlib.Path, ftp: ftplib.FTP):
 
 def move_picture(picture: pathlib.Path):
     logger.info("Moving picture to archive")
-    sent = SENT_DIR / picture
-    shutil.copy(picture, sent)
+    sent = SENT_DIR / picture.name
+    shutil.copyfile(picture, sent)
 
 
 def retry_loop(func):
