@@ -20,7 +20,6 @@ ch.setFormatter(formatter)
 
 logger.addHandler(ch)
 PHOTO_DIR = pathlib.Path(__file__).parent / "pictures/raw"
-IP = "192.168.178.44"
 PORT = 26000
 
 
@@ -74,13 +73,22 @@ def connect(ip: str, port: int) -> ftplib.FTP:
     return ftp
 
 
+def read_ip(file: pathlib.Path = None):
+    if not file:
+        file = pathlib.Path.cwd() / "ip.json"
+    with open(file, "r") as f:
+        ip = f.read()
+    return ip
+
+
 def main(args: argparse.Namespace = None):
     logger.info("Connecting to camera...")
     camera = connect_to_camera()
 
     logger.info("Connecting to FTP...")
-    logger.info(f"IP: {args.ip or IP}, Port: {args.port or PORT}")
-    ftp = connect(args.ip or IP, PORT)
+    ip = read_ip(args.ip_file or None)
+    logger.info(f"IP: {args.ip or ip}, Port: {args.port or PORT}")
+    ftp = connect(args.ip or ip, PORT)
 
     fl = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
     fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, fl | os.O_NONBLOCK)
@@ -105,6 +113,7 @@ def main(args: argparse.Namespace = None):
         except KeyboardInterrupt:
             ftp.close()
             camera.exit()
+            sys.exit(0)
         except gp.GPhoto2Error:
             logger.warning("Camera disconnected. Retrying...")
             camera = connect_to_camera()
@@ -124,6 +133,7 @@ def cli():
     parser.add_argument(
         "-o", "--output", dest="output", help="Output directory for saved images"
     )
+    parser.add_argument("--ip-file", dest="ip_file")
 
     args = parser.parse_args()
     main(args)
