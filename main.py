@@ -52,7 +52,9 @@ def send_picture(picture: pathlib.Path, ftp: ftplib.FTP):
 
 
 def move_picture(picture: pathlib.Path):
-    sent = SENT_DIR / picture.name
+    new_name = get_max_file(SENT_DIR)
+    print(picture.name, new_name)
+    sent = SENT_DIR / new_name
     shutil.move(picture, sent)
 
 
@@ -99,6 +101,20 @@ def read_ip(file: pathlib.Path = None):
     with open(file, "r") as f:
         ip = f.read()
     return ip
+
+
+def get_max_file(folder: pathlib.Path) -> str:
+    """
+    Get the number of files already in the sent folder and increment current file number.
+
+    This is necessary if the camera connection is lost, which causes the first picture taken
+    afterwards to be named "capt0000.jpg" again. Moving it would cause the previous picture
+    to be overwritten.
+    """
+    max_file = max([int(file.stem[-4:]) for file in folder.rglob("*.jpg")])
+    max_file = str(max_file + 1).zfill(4)
+    file_name = f"capt{max_file}.jpg"
+    return file_name
 
 
 def main(args: argparse.Namespace = None):
