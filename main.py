@@ -53,8 +53,7 @@ def send_picture(picture: pathlib.Path, ftp: ftplib.FTP):
 
 def move_picture(picture: pathlib.Path):
     logger.info("Moving picture to archive")
-    new_name = get_max_file(SENT_DIR)
-    sent = SENT_DIR / new_name
+    sent = SENT_DIR / picture
     shutil.copy(picture, sent)
 
 
@@ -140,7 +139,8 @@ def main(args: argparse.Namespace = None):
                 cam_file = camera.file_get(
                     event_data.folder, event_data.name, gp.GP_FILE_TYPE_NORMAL
                 )
-                picture = pathlib.Path(PHOTO_DIR) / event_data.name
+                new_name = get_max_file(SENT_DIR)
+                picture = pathlib.Path(PHOTO_DIR) / new_name
                 logger.info(f"Saving image to {picture}...")
                 cam_file.save(str(picture))
                 send(picture, ftp)
