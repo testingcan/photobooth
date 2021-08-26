@@ -31,6 +31,11 @@ filehandler.setFormatter(formatter)
 logger.addHandler(filehandler)
 
 PHOTO_DIR = pathlib.Path(__file__).parent / "pictures/raw"
+
+SENT_DIR = pathlib.Path("/mnt/usb/photobooth/")
+if not SENT_DIR.exists():
+    SENT_DIR = pathlib.Path(str(PHOTO_DIR).replace("raw", "sent"))
+
 PORT = 26000
 
 
@@ -46,7 +51,7 @@ def send_picture(picture: pathlib.Path, ftp: ftplib.FTP):
 
 
 def move_picture(picture: pathlib.Path):
-    sent = str(picture).replace("raw", "sent")
+    sent = SENT_DIR / picture.name
     picture.rename(sent)
 
 
@@ -108,9 +113,7 @@ def main(args: argparse.Namespace = None):
     fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
     pathlib.Path(PHOTO_DIR).mkdir(exist_ok=True, parents=True)
-    pathlib.Path(str(PHOTO_DIR).replace("raw", "sent")).mkdir(
-        parents=True, exist_ok=True
-    )
+    SENT_DIR.mkdir(exist_ok=True, parents=True)
     timeout = 3000  # milliseconds
     logger.info("Waiting for event...")
     while True:
