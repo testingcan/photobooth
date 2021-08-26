@@ -126,9 +126,6 @@ def main(args: argparse.Namespace = None):
     logger.info(f"IP: {args.ip or ip}, Port: {args.port or PORT}")
     ftp = connect(args.ip or ip, PORT)
 
-    fl = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
-    fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, fl | os.O_NONBLOCK)
-
     pathlib.Path(PHOTO_DIR).mkdir(exist_ok=True, parents=True)
     SENT_DIR.mkdir(exist_ok=True, parents=True)
     timeout = 3000  # milliseconds
