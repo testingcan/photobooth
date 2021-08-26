@@ -124,6 +124,7 @@ def main(args: argparse.Namespace = None):
                 logger.info(f"Saving image to {picture}...")
                 cam_file.save(str(picture))
                 send(picture, ftp)
+                logger.info("Waiting for event...")
         except KeyboardInterrupt:
             ftp.close()
             camera.exit()
