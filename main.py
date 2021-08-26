@@ -52,6 +52,7 @@ def send_picture(picture: pathlib.Path, ftp: ftplib.FTP):
 
 
 def move_picture(picture: pathlib.Path):
+    logger.info("Moving picture to archive")
     new_name = get_max_file(SENT_DIR)
     sent = SENT_DIR / new_name
     shutil.copy(picture, sent)
