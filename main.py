@@ -6,6 +6,7 @@ import fcntl
 import os
 import pathlib
 import logging
+import shutil
 import sys
 
 import gphoto2 as gp
@@ -52,7 +53,7 @@ def send_picture(picture: pathlib.Path, ftp: ftplib.FTP):
 
 def move_picture(picture: pathlib.Path):
     sent = SENT_DIR / picture.name
-    picture.rename(sent)
+    shutil.move(picture, sent)
 
 
 def retry_loop(func):
