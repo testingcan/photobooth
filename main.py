@@ -2,8 +2,6 @@ import argparse
 import datetime
 import time
 import ftplib
-import fcntl
-import os
 import pathlib
 import logging
 import shutil
