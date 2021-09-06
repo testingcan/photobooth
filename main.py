@@ -39,23 +39,44 @@ PORT = 26000
 
 
 def send(picture: pathlib.Path, ftp: ftplib.FTP):
+    """Abstraction function to send picture and move it to
+    archive.
+
+    Args:
+        picture (pathlib.Path): Path to picture saved from camera
+        ftp (ftplib.FTP): FTP connection
+    """
     logger.info("Sending picture to FTP...")
     send_picture(picture, ftp)
     move_picture(picture)
 
 
 def send_picture(picture: pathlib.Path, ftp: ftplib.FTP):
+    """Send picture via FTP.
+
+    Args:
+        picture (pathlib.Path): Path to picture saved from camera
+        ftp (ftplib.FTP): FTP connection
+    """
     with open(picture, "rb") as f:
         ftp.storbinary(f"STOR {picture.name}", f)
 
 
 def move_picture(picture: pathlib.Path):
+    """Move picture to archive.
+
+    Args:
+        picture (pathlib.Path): Path to picture saved from camera
+    """
     logger.info("Moving picture to archive")
     sent = SENT_DIR / picture.name
     shutil.copyfile(picture, sent)
 
 
 def retry_loop(func):
+    """Decorator function to retry functions.
+    Used to keep trying to connect to camera and FTP server.
+    """
     def inner(*args):
         timeout = time.time() + 60 * 15
         while True:
@@ -77,7 +98,12 @@ def retry_loop(func):
 
 
 @retry_loop
-def connect_to_camera():
+def connect_to_camera() -> gp.Camera:
+    """Instantiate the Camera object.
+
+    Returns:
+        gp.Camera: Camera object from gphoto2
+    """
     camera = gp.Camera()
     camera.init()
     logger.info("Successfully connected to camera")
@@ -86,13 +112,30 @@ def connect_to_camera():
 
 @retry_loop
 def connect(ip: str, port: int) -> ftplib.FTP:
+    """Connect to FTP server.
+
+    Args: 
+        ip (str): IP address of FTP server
+        port (int): Port of FTP server
+
+    Returns:
+        ftplib.FTP: FTP object
+    """
     ftp = ftplib.FTP()
     ftp.connect(ip, port)
     logger.info("Successfully connected to FTP")
     return ftp
 
 
-def read_ip(file: pathlib.Path = None):
+def read_ip(file: pathlib.Path = None) -> str:
+    """Read the IP address from file
+
+    Args:
+        file (pathlib.Path): Optional - Specify the file to read from
+
+    Returns:
+        str - IP address
+    """
     if not file:
         file = pathlib.Path.cwd() / "ip.json"
     with open(file, "r") as f:
@@ -118,6 +161,14 @@ def get_max_file(folder: pathlib.Path) -> str:
 
 
 def main(args: argparse.Namespace = None):
+    """Main logic of script.
+
+    Process
+    =======
+    Script connects to camera and FTP server.
+    Then it enters a loop, waiting for the event from the camera,
+    i.e. the picture being taken.
+    """
     logger.info("Connecting to camera...")
     camera = connect_to_camera()
 
@@ -156,6 +207,9 @@ def main(args: argparse.Namespace = None):
 
 
 def cli():
+    """
+    Main function to invoke script via CLI
+    """
     parser = argparse.ArgumentParser(
         prog="Shuttersnitch",
         description="Monitor for camera with Shuttersnitch integration",
